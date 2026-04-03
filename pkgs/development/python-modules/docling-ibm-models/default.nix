@@ -30,14 +30,14 @@
 
 buildPythonPackage rec {
   pname = "docling-ibm-models";
-  version = "3.11.0";
+  version = "3.13.0";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "docling-project";
     repo = "docling-ibm-models";
     tag = "v${version}";
-    hash = "sha256-foRoxuTqwNqn2q/3pAXNoiUYrAKwzXVnAabNRietZ40=";
+    hash = "sha256-T8sVXG9s7jlhoRNexPRmCaiHPtQUAhDa9Z0Ri9i0zcc=";
   };
 
   build-system = [
@@ -79,10 +79,17 @@ buildPythonPackage rec {
 
   disabledTests = [
     # Requires network access
-    "test_code_formula_predictor" # huggingface_hub.errors.LocalEntryNotFoundError
-    "test_figure_classifier" # huggingface_hub.errors.LocalEntryNotFoundError
+    "test_figure_classifier"
     "test_layoutpredictor"
     "test_readingorder"
+    "test_tableformer_v2_model_loading"
+    "test_tableformer_v2_tokenizer_loading"
+    "test_tableformer_v2_image_encoding"
+    "test_tableformer_v2_forward_pass"
+    "test_tableformer_v2_predict"
+    "test_tableformer_v2_numpy_input"
+    "test_tableformer_v2_batch_inference"
+    "test_tableformer_v2_unsupported_input"
     "test_tf_predictor"
   ];
 
