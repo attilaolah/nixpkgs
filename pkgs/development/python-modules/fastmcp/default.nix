@@ -29,7 +29,7 @@
 
 buildPythonPackage (finalAttrs: {
   pname = "fastmcp";
-  version = "3.3.1";
+  version = "3.4.6";
   pyproject = true;
   __structuredAttrs = true;
 
@@ -37,8 +37,11 @@ buildPythonPackage (finalAttrs: {
     owner = "PrefectHQ";
     repo = "fastmcp";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-1W5NbWIULxFXGSozZEeITcPt1EbY6IsJLQdyevcn9BI=";
+    hash = "sha256-YJ6cbO8beSII9xXMz+lPMc+SCp2WWCwYjreB/grrbXs=";
   };
+
+  # TODO: Drop with a release containing https://github.com/PrefectHQ/fastmcp/pull/4796
+  patches = [ ./fix-partial-hints.patch ];
 
   postPatch = ''
     substituteInPlace pyproject.toml \
@@ -108,8 +111,11 @@ buildPythonPackage (finalAttrs: {
     "test_nested_streamable_http_server_resolves_correctly"
 
     # Requires prefab-ui (optional dependency)
+    # https://github.com/NixOS/nixpkgs/pull/510123 adds the prefab-ui package.
     "TestPrefabAppConfig"
     "test_doc_examples_quality"
+    "test_run_dev_apps_with_host"
+    "test_run_dev_apps_log_panel_propagation"
 
     # AssertionError: assert 'INFO' == 'DEBUG'
     "test_temporary_settings"
@@ -119,6 +125,9 @@ buildPythonPackage (finalAttrs: {
     "test_multi_server"
     "test_server_starts_without_auth"
     "test_canonical_multi_client_with_transforms"
+
+    # Server startup is flaky when the suite runs with pytest-xdist
+    "test_unauthorized_access"
 
     # RuntimeError: Attempted to exit a cancel scope that isn't the current tasks's current cancel scope
     "test_stateful_proxy"
