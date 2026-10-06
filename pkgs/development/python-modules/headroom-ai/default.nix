@@ -22,6 +22,7 @@
   datasets,
   fastapi,
   fastembed,
+  git,
   h2,
   hnswlib,
   httpx,
@@ -60,6 +61,7 @@
   transformers,
   tree-sitter,
   tree-sitter-language-pack,
+  truststore,
   uvicorn,
   watchdog,
   websockets,
@@ -106,6 +108,7 @@ let
     transformers
     tree-sitter
     tree-sitter-language-pack
+    truststore
     uvicorn
     watchdog
     websockets
@@ -152,7 +155,7 @@ let
 in
 buildPythonPackage (finalAttrs: {
   pname = "headroom-ai";
-  version = "0.39.1";
+  version = "0.40.0";
   pyproject = true;
   __structuredAttrs = true;
 
@@ -160,7 +163,7 @@ buildPythonPackage (finalAttrs: {
     owner = "headroomlabs-ai";
     repo = "headroom";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-pcsKKq27cKyB7uWskbnWP8VI/UU9RdrE89QClLisvcU=";
+    hash = "sha256-5tNeUVybEXufNiQ0Qa28U1mY5nil6sYFy5/UKb/BACQ=";
   };
 
   patches = lib.optionals stdenv.hostPlatform.isLinux [
@@ -169,7 +172,7 @@ buildPythonPackage (finalAttrs: {
 
   cargoDeps = rustPlatform.fetchCargoVendor {
     inherit (finalAttrs) pname version src;
-    hash = "sha256-azHjTfjdARzYuDMdH1AOYn0YV9U9lzaoULcSC/a9MuE=";
+    hash = "sha256-CBTx7+vGtbY8Z0qGjDs6g00DHqNWO1Wwnl5ksafn2Bc=";
   };
 
   build-system = [
@@ -223,6 +226,13 @@ buildPythonPackage (finalAttrs: {
     "test_runtime_start_lock_blocks_another_process"
     "test_sighup_on_launch_tool_reaps_the_proxy"
     "test_verbatim_read_never_cache_written_before_maturation"
+    # These subprocess tests replace the test environment, losing Nix's
+    # PYTHONPATH, so the child cannot import the in-tree package under test.
+    "test_healthy_process_is_never_shot"
+    "test_seized_gil_is_dumped_and_exited"
+    "test_swapped_stderr_does_not_kill_the_heartbeat"
+    # CliRunner enters full proxy dependency startup before observing this process-environment flag.
+    "test_cli_stateless_flag_exports_env_for_children"
     # These tests download a SentenceTransformer model from Hugging Face, which is unavailable in the sandbox.
     "test_cpu_embed_workers_are_thread_capped"
     "test_cpu_uses_dedicated_thread_capped_executor"
@@ -254,6 +264,7 @@ buildPythonPackage (finalAttrs: {
 
   nativeCheckInputs = [
     cryptography
+    git
     hnswlib
     langchain-ollama
     ollama
