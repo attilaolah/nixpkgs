@@ -1,7 +1,8 @@
 diff --git a/tests/conftest.py b/tests/conftest.py
+index f1de45cf..48a08e7c 100644
 --- a/tests/conftest.py
 +++ b/tests/conftest.py
-@@ -17,6 +17,21 @@ import pytest
+@@ -19,6 +19,21 @@ import pytest
  from tests._skip_helpers import external_model_skip_reason
  
  

@@ -2,6 +2,7 @@
   lib,
   cargo,
   fetchFromGitHub,
+  fetchPypi,
   fetchurl,
   linkFarm,
   python3,
@@ -15,21 +16,115 @@
   difftastic,
   scc,
   git,
+  vermin,
   writableTmpDirAsHomeHook,
 }:
-
 let
   pythonPackages = python3Packages.overrideScope (
     final: prev: {
       mcp = final.mcp_1;
+
+      # Backported patches until they reach master, to avoid a mass rebuild.
+      filelock = prev.filelock.overridePythonAttrs (
+        finalAttrs: previousAttrs: {
+          version = "4.2.4";
+          src = fetchFromGitHub {
+            owner = "tox-dev";
+            repo = "filelock";
+            tag = finalAttrs.version;
+            hash = "sha256-oN4nr4p/vPpg5620LEpqYILofYl2rpaPN5lJqySR6ZE=";
+          };
+        }
+      );
+      python-discovery = prev.python-discovery.overridePythonAttrs (
+        finalAttrs: previousAttrs: {
+          version = "1.6.4";
+          src = fetchFromGitHub {
+            owner = "tox-dev";
+            repo = "python-discovery";
+            tag = finalAttrs.version;
+            hash = "sha256-9CHK00PQ1x5L1OntVTSCmq08zFIR9FhHwEI+3jUobL4=";
+          };
+          nativeCheckInputs = previousAttrs.nativeCheckInputs or [ ] ++ [
+            (final.toPythonModule vermin)
+          ];
+        }
+      );
+      scikit-learn = prev.scikit-learn.overridePythonAttrs (
+        finalAttrs: previousAttrs: {
+          version = "1.9.0";
+          src = fetchPypi {
+            pname = "scikit_learn";
+            inherit (finalAttrs) version;
+            hash = "sha256-iDMmaYnTpREBeKn64weDZ1Rgck0OHvsTsUkB0sZgxVc=";
+          };
+          postPatch =
+            lib.replaceStrings
+              [
+                "cython>=3.1.2,<3.2.6"
+                "meson-python>=0.17.1,<0.22.0"
+                "numpy>=2,<2.6.0"
+                "scipy>=1.10.0,<1.19.0"
+              ]
+              [
+                "cython>=3.1.2,<3.3.0"
+                "meson-python>=0.17.1,<0.20.0"
+                "numpy>=2,<2.5.0"
+                "scipy>=1.10.0,<1.18.0"
+              ]
+              (previousAttrs.postPatch or "");
+          disabledTests = builtins.filter (
+            test:
+            !(builtins.elem test [
+              # Fail due to new deprecation warnings in scipy
+              # FIXME: reenable when fixed upstream
+              "test_logistic_regression_path_convergence_fail"
+              "test_linalg_warning_with_newton_solver"
+              "test_newton_cholesky_fallback_to_lbfgs"
+
+              #  _pickle.PicklingError: Could not pickle the task to send it to the workers.
+              "test_function_no_callback_support"
+            ])
+          ) prev.disabledTests or [ ];
+        }
+      );
+      typer = prev.typer.overridePythonAttrs (
+        finalAttrs: previousAttrs: {
+          disabledTests = previousAttrs.disabledTests or [ ] ++ [
+            "test_file_error"
+          ];
+        }
+      );
+      virtualenv = prev.virtualenv.overridePythonAttrs (
+        finalAttrs: previousAttrs: {
+          version = "21.14.12";
+          src = fetchFromGitHub {
+            owner = "pypa";
+            repo = "virtualenv";
+            tag = finalAttrs.version;
+            hash = "sha256-Lkjhcs1Bj/ObaTyqVL2wGUvwxTkzL0pX8Ii5hSHdrSA=";
+          };
+          postPatch = previousAttrs.postPatch or "" + ''
+            substituteInPlace tests/unit/activation/test_bash.py \
+              --replace-fail '"/bin/bash"' '_BASH'
+          '';
+          disabledTests = previousAttrs.disabledTests or [ ] ++ [
+            # Assumes FHS paths
+            "test_bash_relocation_rejects_sourced_wrapper"
+            # chmod fails in sandbox
+            "test_app_data_setgid_keeps_group_write"
+          ];
+        }
+      );
     }
   );
 
   dependencies = with pythonPackages; [
-    ast-grep-cli
     anthropic
+    ast-grep-cli
     click
     datasets
+    fakeredis
     fastapi
     fastembed
     h2
@@ -109,15 +204,14 @@ let
 in
 pythonPackages.buildPythonApplication (finalAttrs: {
   pname = "headroom";
-  version = "0.41.0";
+  version = "0.42.0";
   pyproject = true;
-  __structuredAttrs = true;
 
   src = fetchFromGitHub {
     owner = "headroomlabs-ai";
     repo = "headroom";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-ITVrw5ruGnNI9t7pq+0Z6gsnqDDAB/5v7I3oOQM5AtE=";
+    hash = "sha256-QtC+51i9SOH/Ny87yaO1glI0VM1ryeBKysDV2lnwcUw=";
   };
 
   patches = [
@@ -129,7 +223,7 @@ pythonPackages.buildPythonApplication (finalAttrs: {
 
   cargoDeps = rustPlatform.fetchCargoVendor {
     inherit (finalAttrs) pname version src;
-    hash = "sha256-RF1b24TIV3EASGfXKUHSrGgQGBUmJLYxzDEjb4fvKPo=";
+    hash = "sha256-BaKBsURxgXkdkIr9OwObm6J10Rd7YjhTXA4D9QHNLpE=";
   };
 
   build-system = [
