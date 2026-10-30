@@ -3,6 +3,7 @@
   cargo,
   fetchFromGitHub,
   fetchPypi,
+  fetchpatch2,
   fetchurl,
   linkFarm,
   python3,
@@ -34,6 +35,40 @@ let
             tag = finalAttrs.version;
             hash = "sha256-oN4nr4p/vPpg5620LEpqYILofYl2rpaPN5lJqySR6ZE=";
           };
+        }
+      );
+      litellm = prev.litellm.overridePythonAttrs (
+        finalAttrs: previousAttrs: {
+          version = "1.106.6";
+          src = fetchFromGitHub {
+            owner = "BerriAI";
+            repo = "litellm";
+            tag = "v${finalAttrs.version}";
+            hash = "sha256-0fgMRYOqCQJuoH7UHyuTmB89Kpu3wTb5Rv5xW+kvcPA=";
+          };
+          cargoDeps = rustPlatform.fetchCargoVendor {
+            inherit (finalAttrs)
+              pname
+              version
+              src
+              cargoRoot
+              ;
+            hash = "sha256-Qf6LV9p6Acy1wewcqrSvJf7CMyus94CNqWtq2CMALso=";
+          };
+          patches = previousAttrs.patches or [ ] ++ [
+            (fetchpatch2 {
+              # fix: support Python 3.15
+              url = "https://github.com/BerriAI/litellm/pull/48359.patch?full_index=1";
+              hash = "sha256-VTj6ak0UfJZXw+mLVaP/i0xaY/u3WunY/9dO/sXJmW0=";
+              includes = [ "pyproject.toml" ];
+            })
+            (fetchpatch2 {
+              # build: allow filelock 4.x and sync package metadata
+              url = "https://github.com/BerriAI/litellm/pull/49137.patch?full_index=1";
+              hash = "sha256-zgljfII+N22BsZ2KI9vz+23yAxYEA3bZbvUvF7gJBHE=";
+              includes = [ "pyproject.toml" ];
+            })
+          ];
         }
       );
       python-discovery = prev.python-discovery.overridePythonAttrs (
