@@ -1,0 +1,44 @@
+--- a/tests/test_cli/test_init_cli.py
++++ b/tests/test_cli/test_init_cli.py
+@@ -1144,11 +1144,15 @@ def test_resolve_copilot_env_supports_anthropic(monkeypatch) -> None:
+     }
+ 
+ 
+-def test_marketplace_source_prefers_repo_checkout(monkeypatch) -> None:
++def test_marketplace_source_prefers_repo_checkout(monkeypatch, tmp_path: Path) -> None:
+     init_cli, _ = _load_init_module(monkeypatch)
+     monkeypatch.delenv("HEADROOM_MARKETPLACE_SOURCE", raising=False)
++    monkeypatch.setattr(init_cli, "__file__", str(tmp_path / "headroom" / "cli" / "init.py"))
++    marketplace = tmp_path / ".claude-plugin"
++    marketplace.mkdir()
++    (marketplace / "marketplace.json").touch()
+ 
+-    assert init_cli._marketplace_source() == str(Path(init_cli.__file__).resolve().parents[2])
++    assert init_cli._marketplace_source() == str(tmp_path)
+ 
+ 
+ def test_run_checked_raises_on_failure(monkeypatch) -> None:
+--- a/tests/test_mcp_registry/test_server_json.py
++++ b/tests/test_mcp_registry/test_server_json.py
+@@ -5,6 +5,9 @@ from __future__ import annotations
+ import json
+ from pathlib import Path
+ 
++import pytest
++import headroom.mcp_registry.server_json as server_json
++
+ from headroom.mcp_registry import build_server_json, render_server_json
+ from headroom.mcp_registry.install import build_headroom_spec
+ from headroom.mcp_registry.server_json import (
+@@ -22,6 +25,11 @@ from headroom.mcp_registry.server_json import (
+ PROJECT_ROOT = Path(__file__).resolve().parents[2]
+ 
+ 
++@pytest.fixture(autouse=True)
++def _use_source_project_metadata(monkeypatch) -> None:
++    monkeypatch.setattr(server_json, "_project_root", lambda: PROJECT_ROOT)
++
++
+ def test_build_server_json_uses_project_metadata() -> None:
+     metadata = load_project_metadata()
+     descriptor = build_server_json(metadata)

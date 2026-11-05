@@ -9,7 +9,6 @@
   rustPlatform,
   rustc,
   stdenv,
-  unzip,
   versionCheckHook,
   ast-grep,
   difftastic,
@@ -123,6 +122,7 @@ pythonPackages.buildPythonApplication (finalAttrs: {
   patches = [
     ./restore-cli-main-before-offline-check.patch
     ./preserve-sandbox-proxy-environment.patch
+    ./test-installed-package.patch
   ];
 
   cargoDeps = rustPlatform.fetchCargoVendor {
@@ -302,7 +302,6 @@ pythonPackages.buildPythonApplication (finalAttrs: {
       pytestCheckHook
       respx
       socksio
-      unzip
       versionCheckHook
       xlwt
       writableTmpDirAsHomeHook
@@ -326,9 +325,9 @@ pythonPackages.buildPythonApplication (finalAttrs: {
     # Use LiteLLM's bundled price map; the test sandbox has no network access.
     export LITELLM_LOCAL_MODEL_COST_MAP=True
 
-    # The source package is needed by tests that load files directly by path.
-    # Extract only maturin's platform-specific native module from the wheel.
-    unzip -j "$dist"/*.whl 'headroom/_core.*' -d headroom
+    # Tests also read package files by path; point those paths at the installed package.
+    rm -r headroom
+    ln -s "$out/${python3.sitePackages}/headroom" headroom
   '';
 
   meta = {
