@@ -33,6 +33,7 @@ let
     ast-grep-cli
     click
     datasets
+    fakeredis
     fastapi
     fastembed
     h2
@@ -112,14 +113,14 @@ let
 in
 pythonPackages.buildPythonApplication (finalAttrs: {
   pname = "headroom";
-  version = "0.41.0";
+  version = "0.42.0";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "headroomlabs-ai";
     repo = "headroom";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-ITVrw5ruGnNI9t7pq+0Z6gsnqDDAB/5v7I3oOQM5AtE=";
+    hash = "sha256-QtC+51i9SOH/Ny87yaO1glI0VM1ryeBKysDV2lnwcUw=";
   };
 
   patches = [
@@ -129,7 +130,7 @@ pythonPackages.buildPythonApplication (finalAttrs: {
 
   cargoDeps = rustPlatform.fetchCargoVendor {
     inherit (finalAttrs) pname version src;
-    hash = "sha256-RF1b24TIV3EASGfXKUHSrGgQGBUmJLYxzDEjb4fvKPo=";
+    hash = "sha256-BaKBsURxgXkdkIr9OwObm6J10Rd7YjhTXA4D9QHNLpE=";
   };
 
   build-system = [
@@ -197,7 +198,7 @@ pythonPackages.buildPythonApplication (finalAttrs: {
     "test_bash_native_installer_supports_persistent_docker_lifecycle"
     "test_bash_native_wrapper_supports_opencode"
 
-    # tests/test_install/test_runtime.py: 1/54 disabled
+    # tests/test_install/test_runtime.py: 1/55 disabled
     "test_runtime_start_lock_blocks_another_process"
 
     # tests/test_install/test_supervisors.py: 1/50 disabled
@@ -206,18 +207,8 @@ pythonPackages.buildPythonApplication (finalAttrs: {
     # tests/test_package_init_lazy.py: 1/13 disabled
     "test_dynamic_detector_import_skips_optional_ml_dependencies"
 
-    # tests/test_proxy_health.py: 4/11 disabled
-    "test_readyz_excludes_kompress_from_aggregate_readiness"
-    "test_readyz_keeps_pending_kompress_unloaded"
-    "test_readyz_kompress_state_matrix"
-    "test_readyz_never_calls_lazy_kompress_getters"
-
     # tests/test_proxy_scalability.py: 1/18 disabled
     "test_run_server_uses_selector_loop_on_windows"
-
-    # tests/test_read_maturation_handler_nobust.py: 2/6 disabled
-    "test_quiesce_turns_config_is_honored"
-    "test_replayed_marker_is_not_rebooked_in_the_emitted_savings"
 
     # tests/test_stateless_no_disk.py: 1/14 disabled
     # CliRunner enters proxy dependency startup before observing the environment flag.
@@ -289,11 +280,6 @@ pythonPackages.buildPythonApplication (finalAttrs: {
     "test_remove_uds_path_is_socket_only"
     "test_run_server_binds_the_socket_instead_of_a_port"
     "test_run_server_removes_the_socket_on_exit"
-  ];
-
-  # LiteLLM 1.81.12 does not contain this upstream test's expected Groq model price.
-  pytestFlags = [
-    "--deselect=tests/test_pricing_from_litellm.py::test_provider_prices_models_its_table_never_covered[groq/llama-guard-3-8b-0.2-0.2]"
   ];
 
   nativeCheckInputs =
