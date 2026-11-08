@@ -1,8 +1,8 @@
 diff --git a/tests/conftest.py b/tests/conftest.py
-index 6cbec0ec..48a08e7c 100644
+index 2f4902ad..4652244f 100644
 --- a/tests/conftest.py
 +++ b/tests/conftest.py
-@@ -95,9 +95,20 @@ def _skip_proxy_port_preflight_unless_exercised(
+@@ -126,9 +126,20 @@ def _skip_proxy_port_preflight_unless_exercised(
  
  
  @pytest.fixture(autouse=True)

@@ -47,6 +47,8 @@ let
     openai
     openpyxl
     opentelemetry-api
+    opentelemetry-exporter-http-transport
+    opentelemetry-exporter-otlp-common
     opentelemetry-exporter-otlp-proto-http
     opentelemetry-sdk
     orjson
@@ -113,14 +115,14 @@ let
 in
 pythonPackages.buildPythonApplication (finalAttrs: {
   pname = "headroom";
-  version = "0.42.0";
+  version = "0.43.1";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "headroomlabs-ai";
     repo = "headroom";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-QtC+51i9SOH/Ny87yaO1glI0VM1ryeBKysDV2lnwcUw=";
+    hash = "sha256-lZNB0v5nheQyiZF4EoRgqqsjmGjg7n98OgiWQCZejXQ=";
   };
 
   patches = [
@@ -130,7 +132,7 @@ pythonPackages.buildPythonApplication (finalAttrs: {
 
   cargoDeps = rustPlatform.fetchCargoVendor {
     inherit (finalAttrs) pname version src;
-    hash = "sha256-BaKBsURxgXkdkIr9OwObm6J10Rd7YjhTXA4D9QHNLpE=";
+    hash = "sha256-NkbMkyCc2i64nhKBE7ZdSAjefvhQac+InWDjlbQg474=";
   };
 
   build-system = [
@@ -198,10 +200,10 @@ pythonPackages.buildPythonApplication (finalAttrs: {
     "test_bash_native_installer_supports_persistent_docker_lifecycle"
     "test_bash_native_wrapper_supports_opencode"
 
-    # tests/test_install/test_runtime.py: 1/55 disabled
+    # tests/test_install/test_runtime.py: 1/56 disabled
     "test_runtime_start_lock_blocks_another_process"
 
-    # tests/test_install/test_supervisors.py: 1/50 disabled
+    # tests/test_install/test_supervisors.py: 1/59 disabled
     "test_install_supervisor_darwin_windows_and_unsupported"
 
     # tests/test_package_init_lazy.py: 1/13 disabled
@@ -229,16 +231,16 @@ pythonPackages.buildPythonApplication (finalAttrs: {
     # tests/test_memory/test_embedder_mps_serialization.py: 1/4 disabled
     "test_cpu_uses_dedicated_thread_capped_executor"
 
-    # tests/test_memory/test_hierarchical.py: 4/41 disabled
+    # tests/test_memory/test_hierarchical.py: 4/43 disabled
     # test_embed_batch also matches test_embed_batch_uses_batched_onnx_inference.
     "test_embed_batch"
     "test_embed_single"
     "test_similar_texts_have_high_similarity"
 
-    # tests/test_memory_bridge.py: 1/40 disabled
+    # tests/test_memory_bridge.py: 1/43 disabled
     "test_import_export_preserves_facts"
 
-    # tests/test_relevance.py: 4/34 disabled
+    # tests/test_relevance.py: 4/35 disabled
     "test_batch_efficiency"
     "test_hybrid_scoring"
     "test_paraphrase_match"

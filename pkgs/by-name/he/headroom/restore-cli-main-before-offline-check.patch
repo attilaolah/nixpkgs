@@ -1,9 +1,9 @@
 diff --git a/tests/conftest.py b/tests/conftest.py
-index f1de45cf..48a08e7c 100644
+index 7b1417a1..4652244f 100644
 --- a/tests/conftest.py
 +++ b/tests/conftest.py
-@@ -19,6 +19,21 @@ import pytest
- from tests._skip_helpers import external_model_skip_reason
+@@ -50,6 +50,21 @@ def gemini_request():
+     )
  
  
 +@pytest.fixture(autouse=True)
