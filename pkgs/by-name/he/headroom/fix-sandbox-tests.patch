@@ -1,0 +1,42 @@
+diff --git a/tests/test_cache_optimizer_example_cleanup.py b/tests/test_cache_optimizer_example_cleanup.py
+index aebef63..814c03f 100644
+--- a/tests/test_cache_optimizer_example_cleanup.py
++++ b/tests/test_cache_optimizer_example_cleanup.py
+@@ -27,7 +27,7 @@ runpy.run_path("examples/cache_optimizer_config_local.py", run_name="__main__")
+ """
+     env = {
+         **os.environ,
+-        "PYTHONPATH": str(repo),
++        "PYTHONPATH": f"{repo}{os.pathsep}{os.environ.get('PYTHONPATH', '')}",
+         "HEADROOM_CCR_BACKEND": "sqlite",
+         "HEADROOM_COMPRESS_SESSION_STORE": "",
+         "HEADROOM_OFFLINE": "1",
+diff --git a/tests/test_install_git_hooks_script.py b/tests/test_install_git_hooks_script.py
+index 1a4701e..cec42d3 100644
+--- a/tests/test_install_git_hooks_script.py
++++ b/tests/test_install_git_hooks_script.py
+@@ -27,2 +27,2 @@
+-FAKE_PRE_COMMIT = """#!/usr/bin/env bash
++FAKE_PRE_COMMIT = """#!/bin/sh
+ hooks="$(git rev-parse --git-path hooks)"
+ hooks="$(git rev-parse --git-path hooks)"
+ case "$*" in
+   install) echo "#!/bin/sh" > "$hooks/pre-commit" ;;
+diff --git a/tests/test_private_state_files.py b/tests/test_private_state_files.py
+index 7b0fb7b..5ec0d9b 100644
+--- a/tests/test_private_state_files.py
++++ b/tests/test_private_state_files.py
+@@ -140,7 +140,12 @@ class TestEnsurePrivateFile:
+     def test_non_0600_mode_is_narrowed_once_then_skipped(self, tmp_path, monkeypatch, mode):
+         p = tmp_path / "store.db"
+         p.write_text("x")
+-        p.chmod(mode)
++        try:
++            p.chmod(mode)
++        except PermissionError:
++            if mode & 0o6000:
++                pytest.skip("sandbox does not permit setuid/setgid bits")
++            raise
+         assert _mode(p) == mode
+         opened = _record_opens(monkeypatch, p)
+         fileperms.ensure_private_file(p)

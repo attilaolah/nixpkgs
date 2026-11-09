@@ -22,59 +22,77 @@
 }:
 
 let
+  # mcp 2.3.0's test suite imports logfire. logfire 4.41.0 caps
+  # OpenTelemetry below 1.45.0, while nixpkgs ships 1.45.2; relax those
+  # test-only bounds locally so mcp's checks can run.
   pythonPackages = python3Packages.overrideScope (
     final: prev: {
-      mcp = final.mcp_1;
+      logfire = prev.logfire.overridePythonAttrs (old: {
+        pythonRelaxDeps = [
+          "opentelemetry-exporter-otlp-proto-http"
+          "opentelemetry-sdk"
+        ];
+      });
     }
   );
 
-  dependencies = with pythonPackages; [
-    anthropic
-    ast-grep-cli
-    click
-    datasets
-    fakeredis
-    fastapi
-    fastembed
-    h2
-    httpx
-    jinja2
-    litellm
-    magika
-    mcp
-    numpy
-    onnxruntime
-    openai
-    openpyxl
-    opentelemetry-api
-    opentelemetry-exporter-http-transport
-    opentelemetry-exporter-otlp-common
-    opentelemetry-exporter-otlp-proto-http
-    opentelemetry-sdk
-    orjson
-    pillow
-    pydantic
-    pyyaml
-    rapidocr
-    rich
-    scikit-learn
-    sentence-transformers
-    sentencepiece
-    sqlite-vec
-    tiktoken
-    tomlkit
-    torch
-    trafilatura
-    transformers
-    tree-sitter
-    tree-sitter-language-pack
-    truststore
-    uvicorn
-    watchdog
-    websockets
-    xlrd
-    zstandard
-  ];
+  dependencies =
+    with pythonPackages;
+    [
+      anthropic
+      ast-grep-cli
+      click
+      datasets
+      fakeredis
+      fastapi
+      fastembed
+      filelock
+      h2
+      httpx
+      huggingface-hub
+      jinja2
+      litellm
+      magika
+      mcp
+      numpy
+      onnxruntime
+      openai
+      openpyxl
+      opentelemetry-api
+      opentelemetry-exporter-http-transport
+      opentelemetry-exporter-otlp-common
+      opentelemetry-exporter-otlp-proto-http
+      opentelemetry-sdk
+      orjson
+      pillow
+      pydantic
+      python-socks
+      pyyaml
+      rapidocr
+      rich
+      scikit-learn
+      sentence-transformers
+      sentencepiece
+      sqlite-vec
+      starlette
+      tiktoken
+      tomlkit
+      torch
+      trafilatura
+      transformers
+      tree-sitter
+      tree-sitter-language-pack
+      truststore
+      uvicorn
+      watchdog
+      websockets
+      xlrd
+      zstandard
+    ]
+    # Upstream gates hf-xet on x86_64/aarch64 (and their AMD64/arm64 aliases).
+    ++ lib.optionals (stdenv.hostPlatform.isx86_64 || stdenv.hostPlatform.isAarch64) [
+      pythonPackages.hf-xet
+    ];
 
   bundledTools = [
     ast-grep
@@ -128,6 +146,10 @@ pythonPackages.buildPythonApplication (finalAttrs: {
   patches = [
     ./restore-cli-main-before-offline-check.patch
     ./preserve-sandbox-proxy-environment.patch
+    # Keep three upstream tests runnable in the Nix sandbox: preserve the
+    # inherited PYTHONPATH, avoid the missing /usr/bin/env, and skip chmod of
+    # setuid/setgid modes when the sandbox rejects them.
+    ./fix-sandbox-tests.patch
   ];
 
   cargoDeps = rustPlatform.fetchCargoVendor {
@@ -290,6 +312,7 @@ pythonPackages.buildPythonApplication (finalAttrs: {
       cryptography
       git
       hnswlib
+      httpx2
       langchain-ollama
       ollama
       pytest-asyncio
