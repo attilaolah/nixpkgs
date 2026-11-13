@@ -259,7 +259,7 @@ effectiveStdenv.mkDerivation (finalAttrs: {
     "test-arg-parser"
     "test-thread-safety"
     "test-llama-context-model"
-    # Tests convert_hf_to_gguf, which is not installed, and needs torch.
+    # These test the uninstalled converter and need torch; see passthru.tests.
     "test-conversion-fp8"
     "test-kv-cache-scales"
   ]
@@ -268,7 +268,50 @@ effectiveStdenv.mkDerivation (finalAttrs: {
     "test-jinja-py"
   ];
 
-  passthru.updateScript = ./update.sh;
+  passthru = {
+    updateScript = ./update.sh;
+
+    # The converter is not installed, and its Python dependencies are too heavy
+    # for the normal package build. Run its tests independently from the source.
+    tests =
+      let
+        python = python3.withPackages (
+          ps: with ps; [
+            numpy
+            protobuf
+            pyyaml
+            requests
+            safetensors
+            sentencepiece
+            torch
+            tqdm
+            transformers
+          ]
+        );
+        mkConverterTest =
+          name: file:
+          stdenv.mkDerivation {
+            pname = "llama-cpp-test-${name}";
+            inherit (finalAttrs) version src;
+            nativeBuildInputs = [ python ];
+            dontConfigure = true;
+            buildPhase = ''
+              runHook preBuild
+              python -m unittest discover -s tests -p ${lib.escapeShellArg file} -v
+              runHook postBuild
+            '';
+            installPhase = ''
+              runHook preInstall
+              touch "$out"
+              runHook postInstall
+            '';
+          };
+      in
+      {
+        conversion-fp8 = mkConverterTest "conversion-fp8" "test_conversion_fp8.py";
+        kv-cache-scales = mkConverterTest "kv-cache-scales" "test_kv_cache_scales.py";
+      };
+  };
 
   meta = {
     description =
